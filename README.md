@@ -8,4 +8,4 @@ If a request with a matching label exists in the queue, it will be moved to the 
 Test suite notes
 ----------------
 
-testopts{} and badopts{} in the test suite need to be a working and broken request, respectively.
+testopts{} and badopts{} in the test suite need to be a working and broken request for the test suite to function properly.

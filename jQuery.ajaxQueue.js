@@ -1,8 +1,12 @@
 /**
  * jQuery.ajaxQueue
  * github.com/markreid/jqueryajaxqueue
- *
  * built for jQuery 1.8+, may work with earlier
+ *
+ * Queues jQuery.ajax requests so they fire consecutively instead of in parallel.
+ * Optionally provide a label for each request, and no more than one of each label
+ * will be queued.  Adding a request with an existing label moves that request
+ * to the back of the queue.
  *
  * UMD wrapper by jburke
  * github.com/umdjs/umd
@@ -20,7 +24,7 @@
 
     var queue = [];
 
-    // helper, mostly for testing.
+    // helpers, primarily for testing.
     $.fn.ajaxQueueGet = function(){
         return queue;
     };
@@ -29,13 +33,21 @@
         queue = [];
     };
 
+
+    /**
+     * Adds jQuery.ajax requests to a queue.
+     * If provided with an optional label, will check the queue for existing requests
+     * that match the label and move them to the back, rather than queueing up another.
+     * @param  {Object} opts  jQuery.ajax options
+     * @param  {String} label Label (optional)
+     * @return {jQuery.Deferred.promise}
+     */
     $.ajaxQueue = function (opts, label){
         var dfd = $.Deferred();
         var promise = dfd.promise();
 
         if(label && checkForLabel(label)) return queue[queue.length-1];
 
-        // attach the options and label to the promise, that's what we're going to put in the queue.
         dfd._ajaxQueue = {
             opts: opts,
             label: label
@@ -44,22 +56,26 @@
         return promise;
     };
 
+    /**
+     * Check the queue for a request with a matching label, move it to the back of the queue
+     * @param  {String} label   Label
+     * @return {Boolean}        Match found?
+     */
     var checkForLabel = function(label){
-        // find a promise with this label in the queue.
         var len, i = queue.length;
         while(i--){
             if(queue[i]._ajaxQueue.label === label){
-                console.log('matching label found at queue[%s]', i);
                 queue.push(queue.splice(i, 1)[0]);
                 return true;
             }
         }
+        return false;
     };
 
     /**
      * Push a request into the queue.  If it's the only one there, call makeRequest()
-     * @param {Object} req  Deferred
-     * @return {Boolean}    Did we call stepQueue
+     * @param {Object} req  jQuery.Deferred
+     * @return {Boolean}    Called stepQueue?
      */
     var addToQueue = function(dfd){
         queue.push(dfd);
@@ -71,7 +87,7 @@
 
     /**
      * Fire a request for the first object in the queue
-     * @return {Boolean}  Whether a request was fired or not
+     * @return {Boolean}  Was request fired?
      */
     var stepQueue = function(){
         var dfd = queue[0];
